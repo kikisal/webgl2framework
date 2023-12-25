@@ -1,0 +1,32 @@
+/*
+ * ATTENTION: The "eval" devtool has been used (maybe by default in mode: "development").
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+/******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./src/main.js":
+/*!*********************!*\
+  !*** ./src/main.js ***!
+  \*********************/
+/***/ (() => {
+
+eval("\r\nconst ShaderTypes = {\r\n\tVERTEX:   'vertex',\r\n\tFRAGMENT: 'fragment'\r\n};\r\n\r\nconst canvas = document.createElement('canvas');\r\nconst gl     = canvas.getContext('webgl2');\r\n\r\ncanvas.width  = 600;\r\ncanvas.height = 600;\r\n\r\n\r\nfunction CreateShader(shaderUrl) {\r\n\treturn Shader.fromURL(shaderUrl);\r\n}\r\n\r\nfunction ShaderSource(s) {\r\n\tthis.src = s;\r\n}\r\n\r\nfunction ShaderPack(v, s) {\r\n\tthis.fragment = new ShaderSource(v);\r\n\tthis.vertex = new ShaderSource(s);\r\n}\r\n\r\nfunction Shader(vshader, fshader) {\r\n\tthis.vshader = vshader;\r\n\tthis.fshader = fshader;\r\n\tthis.program = null;\r\n}\r\n\r\n\r\n\r\nShader.prototype = {\r\n\tCompileProgram() {\r\n\t\tif (!this.vshader || !this.fshader)\r\n\t\t\treturn;\r\n\r\n\t\tif (this.program)\r\n\t\t\tgl.deleteProgram(this.program);\r\n\r\n\t\tconst vertexShader   = CreateGLShader(this.vshader, gl.VERTEX_SHADER);\r\n\t\tconst fragmentShader = CreateGLShader(this.fshader, gl.FRAGMENT_SHADER);\r\n\t\r\n\t\tif (!vertexShader || !fragmentShader)\r\n\t\t\treturn;\r\n\r\n\t\tgl.compileShader(vertexShader);\r\n\t\tgl.compileShader(fragmentShader);\r\n\r\n\r\n\t\tif (LogShaderCompilationStatus([\r\n\t\t\tnew ShaderWrapper(vertexShader, ShaderTypes.VERTEX), \r\n\t\t\tnew ShaderWrapper(fragmentShader, ShaderTypes.FRAGMENT)\r\n\t\t]))\r\n\t\t\treturn;\r\n\t\t\r\n\r\n\t\tthis.program = gl.createProgram();\r\n\r\n\t\t\r\n\t\t// Attach pre-existing shaders\r\n\t\tgl.attachShader(this.program, vertexShader);\r\n\t\tgl.attachShader(this.program, fragmentShader);\r\n\r\n\t\tgl.linkProgram(this.program);\r\n\r\n\t\tif (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {\r\n\t\t\tconst info = gl.getProgramInfoLog(this.program);\r\n\t\t\tconsole.error(`Could not compile WebGL program. \\n\\n${info}`);\r\n\t\t}\r\n\r\n\t\tgl.deleteShader(this.vertexShader);\r\n\t\tgl.deleteShader(this.fragmentShader);\r\n\t},\r\n\r\n\tOnShaderLoaded(sp) {\r\n\t\tthis.vshader = sp.vertex.src;\r\n\t\tthis.fshader = sp.fragment.src;\r\n\t\tthis.CompileProgram();\r\n\t\tconsole.log('program compiled!');\r\n\t},\r\n\r\n\tuse() {\r\n\t\tgl.useProgram(this.program);\r\n\t}\r\n};\r\n\r\n\r\nShader.fromURL = (url) => {\r\n\tconst s = new Shader(null, null);\r\n\r\n\r\n\tconst req = new XMLHttpRequest();\r\n\treq.open(\"GET\", url, true);\r\n\treq.responseType = \"arraybuffer\";\r\n\r\n\treq.onload = (event) => {\r\n\t\tconst arrayBuffer = req.response;\r\n\t\tif (arrayBuffer) {\r\n\t\t\tconst byteArray = new Uint8Array(arrayBuffer);\r\n\t\t\tconst sources = [\r\n\t\t\t\tnew String(),\r\n\t\t\t\tnew String()\r\n\t\t\t];\r\n\r\n\t\t\tconst shaderPack = new ShaderPack(null, null);\r\n\r\n\t\t\tlet ind = 0;\r\n\r\n\t\t\tbyteArray.forEach((element, index) => {\r\n\t\t\t\tif (element == 0) {\r\n\t\t\t\t\tind++;\r\n\t\t\t\t\treturn;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tif (ind > sources.length)\r\n\t\t\t\t\treturn;\r\n\r\n\t\t\t\tsources[ind] += String.fromCharCode(element);\r\n\t\t\t});\r\n\r\n\t\t\tshaderPack.vertex.src   = sources[0];\r\n\t\t\tshaderPack.fragment.src = sources[1];\r\n\r\n\t\t\ts.OnShaderLoaded(shaderPack);\r\n\t\t}\r\n\t};\r\n\r\n\treq.send(null);\r\n\r\n\treturn s;\r\n};\r\n\r\nfunction CreateGLShader(src, stype) {\r\n\tconst s = gl.createShader(stype);\r\n\tgl.shaderSource(s, src);\r\n\treturn s;\r\n}\r\n\r\nfunction LogShaderCompilationStatus(shaders) {\r\n\tlet result = false;\r\n\tfor (const s of shaders) {\r\n\t\tif (!ShaderCompiledOk(s.shader)) {\r\n\t\t\tconsole.error(`Error during compilation of shader ${s.type}: ${gl.getShaderInfoLog(s.shader)}`);\t\r\n\t\t\tresult = true;\r\n\t\t}\r\n\t}\r\n\treturn result;\r\n}\r\n\r\nfunction ShaderCompiledOk(s) {\r\n\treturn gl.getShaderParameter(s, gl.COMPILE_STATUS);\r\n}\r\n\r\nfunction ShaderWrapper(s, t) {\r\n\tthis.shader = s;\r\n\tthis.type \t= t;\r\n}\r\n\r\nconst shader = CreateShader(\"http://localhost:3000/cdn/shaders/default.shader\");\r\nconsole.log(shader);\r\n\r\ngl.clearColor(.4, 0.2, .1, 1.0);\r\n\r\ngl.enable(gl.DEPTH_TEST);\r\n\r\nconst vertices = [\r\n  \t -.5, -.5, 0,\r\n\t.5, -.5, 0,\r\n\t.5, .5, 0,\r\n\t-.5, .5, 0\r\n];\r\n\r\nconst indices = [\r\n\t0, 1, 2,\r\n\t0, 1, 2,\r\n\t2, 3, 0\r\n];\r\n\r\nconst VAO = gl.createVertexArray();\r\nconst VBO = gl.createBuffer();\r\nconst EBO = gl.createBuffer();\r\n\r\ngl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);\r\ngl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);\r\ngl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);\r\n\r\ngl.bindBuffer(gl.ARRAY_BUFFER, VBO);\r\ngl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);\r\n\r\ngl.bindVertexArray(VAO);\r\ngl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);\r\ngl.enableVertexAttribArray(0),\r\ngl.vertexAttribPointer(0, 3, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);\r\ngl.bindBuffer(gl.ARRAY_BUFFER, null);\r\n\r\ngl.viewport(0, 0, canvas.width, canvas.height);\r\n\r\nfunction loop() {\r\n\t\r\n\tgl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\r\n\t\r\n\tshader.use();\r\n\r\n\tgl.bindVertexArray(VAO);\r\n\tgl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);\r\n\r\n\trequestAnimationFrame(loop);\r\n}\r\n\r\nrequestAnimationFrame(loop);\r\n\r\n\r\ndocument.body.appendChild(canvas);\n\n//# sourceURL=webpack://gl2test/./src/main.js?");
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module can't be inlined because the eval devtool is used.
+/******/ 	var __webpack_exports__ = {};
+/******/ 	__webpack_modules__["./src/main.js"]();
+/******/ 	
+/******/ })()
+;
